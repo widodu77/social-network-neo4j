@@ -1,0 +1,537 @@
+# GraphDB projects specification - AIDAMS 3A
+
+## Project goals and organization 🎯
+
+- **Your mission:** Build an end‑to‑end, graph‑backed application that :
+  - Models a real‑world use case in Neo4j and python (see list below)
+  - Ingests and cleans data (ETL/ELT scripts)
+  - Exposes key graph queries via a FastAPI service (meaningful endpoints)
+  - Runs via Docker Compose (Neo4j + API + optional services if you need it)
+  - Automate testing (pytest or scripted tests) and clear documentation
+  - Work with docker, make and git
+  
+- **Expected deliverables:**
+  - Repository with `docker-compose.yml`, `app/`, `scripts/`, `tests/`, and a comprehensive `README.md` at the root of your repo with screenshot of your working projects (interface, fastapi swagger...)
+  - Graph schema diagram and a brief modeling rationale (use draw.io)
+  - Demo queries and example API calls covering the main use cases
+  - Demo notebook at the root of your git repo for graph EDA 
+- **Team size:** Work in groups of up to 5 students (maximum 5 per group).
+- See the "Minimal requirements for personnal projects" section below for the detailed checklist.
+
+
+## MAIN PROJECT I AM DOING: **Social Network Recommendation System**
+
+**Use Case:** Build a LinkedIn-style professional network
+- **Graph Model:** Users, Skills, Companies, Connections (KNOWS, WORKS_AT, HAS_SKILL)
+- **API Features:**
+  - Friend recommendations based on mutual connections
+    - e.g. GET `/api/users/{user_id}/recommendations/friends`
+  - Job recommendations based on skills graph
+    - e.g. GET `/api/users/{user_id}/recommendations/jobs`
+  - "People you may know" algorithm
+    - e.g. GET `/api/users/{user_id}/suggestions/people`
+  - Shortest path between professionals
+    - e.g. GET `/api/paths/shortest?from={user_id_a}&to={user_id_b}`
+- **Difficulty:** 2 
+
+### Data Sources 
+
+1. **SNAP (Stanford Network Analysis Project) - GitHub Developers**
+   - URL: https://snap.stanford.edu/data/github-social.html
+   - 138k+ developers with follower relationships 
+
+2. **Twitch/Deezer Social Networks** (Benedek Rozemberczki)
+   - GitHub: https://github.com/benedekrozemberczki/datasets
+   - Multiple social networks (Twitch gamers, Deezer users)
+   - Includes user features and follower relationships
+
+3. **Sample Social Network Datasets**
+   - GitHub: https://github.com/melaniewalsh/sample-social-network-datasets
+   - Curated collection for teaching (Jazz musicians, Marvel characters, etc.)
+
+---
+
+## Common Technical Stack for All Projects:
+
+```yaml
+Stack :
+  - Neo4j 5.x 
+  - Python 3.11+
+  - FastAPI 
+  - Docker 
+  - Neo4j Python Driver
+  - Pydantic (data validation)
+  - pytest (testing)
+  
+GitHub Workflow :
+  - Main branch controlled by the team lead (one per team) he will be responsible for the merges and assign code review  
+  - Feature branches per team member
+  - Pull request reviews required by the team lead
+  - CI/CD with GitHub Actions (optional)
+```
+
+## Suggested Project Structure :
+
+Below the classical backend python mini project structure I encourage you to follow 🥸
+
+```
+project-name/
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── Makefile
+├── app/
+│   ├── main.py
+│   ├── models/
+│   ├── routers/
+│   ├── services/ 
+│   └── database/ #if you need some ORM mapping 
+├── tests/
+├── scripts/
+│   └── seed_data.py 
+└── requirements.txt
+```
+
+
+--- 
+
+## Minimal Makefile template
+
+Use this as a starting point. Adjust names/paths to your project.
+
+> If you do not know the make command you can read [my tutorial](https://courses.dallard.tech/linux/makefile/) about it 🤓
+
+
+
+```makefile
+.PHONY: help run docker-build docker-run clean venv install lint format tree
+
+# Image tag (override with: make docker-build TAG=myorg/myapp:dev)
+TAG ?= graph-api:dev
+
+help:
+	@echo "Commands:"
+	@echo "  make venv           Create local virtualenv (.venv)"
+	@echo "  make install        Install requirements into .venv"
+	@echo "  make run            Run FastAPI (uvicorn) on :8000"
+	@echo "  make docker-build   Build Docker image (TAG=$(TAG))"
+	@echo "  make docker-run     Run Docker container on :8000"
+	@echo "  make lint           Run pylint (if configured)"
+	@echo "  make format         Run black code formatter"
+	@echo "  make clean          Remove caches and temp files"
+	@echo "  make tree           Show project tree (depth 3)"
+
+venv:
+	@if [ ! -d ".venv" ]; then \
+		python3 -m venv .venv; \
+		. .venv/bin/activate && pip install --upgrade pip; \
+		echo "Created .venv"; \
+	else echo ".venv already exists"; fi
+	@echo "To activate: source .venv/bin/activate"
+
+install: venv
+	@. .venv/bin/activate && pip install -r requirements.txt
+
+run:
+	@. .venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+docker-build:
+	docker build -t $(TAG) .
+
+docker-run:
+	docker run --rm -it -p 8000:8000 --env-file .env $(TAG)
+
+lint:
+	@if command -v pylint >/dev/null 2>&1; then \
+		pylint app || true; \
+	else echo "pylint not installed (add to requirements.txt)"; fi
+
+format:
+	@if command -v black >/dev/null 2>&1; then \
+		black app -l 120; \
+	else echo "black not installed (add to requirements.txt)"; fi
+
+clean:
+	find . -type d -name "__pycache__" -prune -exec rm -rf {} \; || true
+	find . -type f -name "*.pyc" -delete || true
+
+tree:
+	@if command -v tree >/dev/null 2>&1; then \
+		tree -L 3 -I "node_modules|dist|.git|.venv|__pycache__"; \
+	else \
+		find . -maxdepth 3 -type d -not -path '*/\.*' | sort; \
+	fi
+```
+
+
+## Implementation Tips for Students for your project 
+
+For each project, students should:
+1. **Download & Explore** the dataset first to understand the schema
+2. **Design the Graph Model** - identify nodes, relationships, and properties
+3. **Create Data Import Scripts** - use Neo4j's Python driver to bulk import
+4. **Build the FastAPI endpoints** - CRUD operations + graph queries
+5. **Dockerize everything** - Neo4j + FastAPI + any other services
+
+The datasets I've provided are all:
+- ✅ **Publicly available**
+- ✅ **Well-documented**
+- ✅ **Real-world or realistic** (not toy datasets)
+- ✅ **Large enough** to be interesting but manageable for students
+
+Would you like me to create a detailed data modeling guide for any specific project, or help you design the graph schema for one of these datasets?
+
+
+--- 
+
+# Project evaluation criteras
+
+## Core Technical Components (28 points)
+
+### Docker Infrastructure & Services (9 points)
+
+* **[2 pts]** Functional `docker-compose.yml` with ≥3 services (Neo4j, FastAPI, +1)
+* **[2 pts]** Proper `Dockerfile` per service or correctly configured official image
+* **[2 pts]** Env vars via `.env.example` (no hardcoded secrets)
+* **[2 pts]** ≥1 image pushed to public registry (link in README)
+* **[1 pt]** Starts cleanly with `docker-compose up`
+
+### Neo4j Graph Database (10 points)
+
+* **[3 pts]** Graph schema: ≥3 node labels, ≥3 relationship types, relevant properties
+* **[2 pts]** ≥2 relevant constraints 
+* **[2 pts]** Appropriate indexes for frequent queries
+* **[2 pts]** Data ingestion script (`scripts/seed_data.py`) with your dataset
+* **[1 pt]** Dataset source documented + justification
+
+### FastAPI (9 points)
+
+* **[2 pts]** ≥4 endpoints covering use cases
+* **[2 pts]** ≥3 endpoints use advanced Cypher (pathfinding/patterns/aggregations)
+* **[2 pts]** Pydantic models for I/O validation
+* **[2 pts]** Swagger/OpenAPI (`/docs`) accessible and functional
+* **[1 pt]** Proper error handling (HTTP codes, clear messages)
+
+---
+
+## Architecture, Documentation & Clean Code (14 points)
+
+### Schémas & Modélisation (5 points)
+
+* **[2 pts]** Neo4j graph schema diagram (labels, relations+directions, key properties)
+* **[2 pts]** System architecture diagram (services, ports, data flows)
+* **[1 pt]** Written modeling justification
+
+### Documentation (5 points)
+
+* **[3 pts]** Complete `README.md` (description, build/run, API examples, screenshots)
+* **[2 pts]** Demo notebook (`demo.ipynb`) with graph exploration/visualizations
+
+### Clean Code & Linting (4 points)
+
+* **[2 pts]** `.pylintrc` present, pylint ≥ 9.5/10, `make lint` works
+* **[1 pt]** PEP 8 compliance and clean structure
+* **[1 pt]** Docstrings in all code files
+
+---
+
+## Utilisation Avancée de Neo4j (27 points)
+
+### Requêtes Cypher Avancées (11 points)
+
+* **[5 pts]** Pathfinding & graph algorithms if relevant for your dataset (`shortestPath()`, `allShortestPaths()`, GDS traversal) in ≥2 endpoints
+* **[4 pts]** Complex pattern matching (3+ depth, `OPTIONAL MATCH`, relationship conditions, advanced aggregations)
+* **[2 pts]** Analytical queries (stats, `WITH`, `UNWIND`, subqueries)
+
+### Optimisation & Performance (6 points)
+
+* **[6 pts]** **Optimized queries**: use `LIMIT`, subqueries to reduce work, avoid Cartesian products; parameterized queries; basic memory/page-cache awareness; before/after benchmarks or latency metrics
+
+### Graph Data Science (10 points)
+
+* **[1 pts]** Neo4j GDS: in-memory projection + **≥2 algorithms** (e.g., PageRank + Louvain/Similarity/Centrality)
+* **[3 pts]** API integration of ML endpoint(s) 
+* **[3 pts]** Machine learning workflow that predicts new links or classifies nodes (features, training, evaluation)
+* **[3 pts]** LLM-powered knowledge graph query system (prompt design, response handling, evaluation)
+
+---
+
+## Makefile & Automatisation (3 points)
+
+* **[1 pt]** Makefile with key commands (`help`, `install`, `run`, `docker-run`, `test`, `lint`, `clean`)
+* **[1 pt]** All commands work; `make help` is clear
+* **[1 pt]** README documents Makefile usage with examples
+
+---
+
+## Tests & Qualité (10 points)
+
+### Tests Automatisés (7 points)
+
+* **[3 pts]** Pytest: unit, API integration, Neo4j connection
+* **[2 pts]** Container health tests: Neo4j (bolt), FastAPI (`/health`/`/docs`)
+* **[2 pts]** Cypher query tests; runnable via `make test`/`pytest`
+
+### Couverture (3 points)
+
+* **[2 pts]** Coverage ≥ 60% (`pytest-cov`)
+* **[1 pt]** All tests pass ✅ and coverage report generated
+
+---
+
+## Software Engineering Best Practices (8 points)
+
+### CI/CD avec GitHub Actions (2 points)
+
+* **[1 pt]** “Lint” workflow runs on push/PR
+* **[1 pt]** “Test” workflow with coverage
+
+### Collaboration & Code Quality (2 points)
+
+* **[1 pt]** Badges in README (build, tests, coverage)
+* **[1 pt]** Documented code reviews (≥2 constructive comments per PR)
+
+### Architecture Avancée (4 point)
+
+* **[3 pt]** Reverse proxy (Nginx/Traefik) **or** authentication (JWT/API keys) on a sensitive endpoint
+* **[1 pts]** **Strategic index usage demonstrated** via `EXPLAIN`/`PROFILE` with screenshots or notebook cells showing improved plans/costs
+
+---
+
+## Collaboration & Gestion Git (10 points)
+
+### Organisation des Branches (3 points)
+
+* **[2 pts]** ≥2 active branches (`main` + `dev`/features)
+* **[1 pt]** Proper `.gitignore` (excludes `.env`, `__pycache__`, `.venv`, `htmlcov/`, etc.)
+
+### Contributions Équitables des Membres (7 points)
+
+* **[3 pts]** Fair commit distribution (max gap **30%**); penalty −1 pt per member <15%
+* **[3 pts]** ≥1 merged PR per member (substantial) + screenshot of merged PRs
+* **[1 pt]** Clear commit messages (`feat:`, `fix:`, `docs:`)
+
+---
+
+## Scoring Summary
+
+| Section                             | Points  |
+| ----------------------------------- | ------- |
+| Core Technical Components           | 28      |
+| Utilisation Avancée de Neo4j        | 27      |
+| Architecture & Clean Code           | 14      |
+| Makefile & Automatisation           | 3       |
+| Tests & Qualité                     | 10      |
+| Software Engineering Best Practices | 8       |
+| Collaboration & Gestion Git         | 10      |
+| **Total**                           | **100** |
+
+---
+
+## Expected Deliverables
+
+### In your GitHub repository
+
+1. ✅ Complete source code with proper project structure
+2. ✅ Functional `docker-compose.yml`
+3. ✅ **Fully documented `Makefile`**
+4. ✅ **`.pylintrc` configured according to recommended rules**
+5. ✅ `README.md` with screenshots and complete instructions
+6. ✅ Neo4j graph schema (image file or `.drawio`)
+7. ✅ Demonstration notebook exploring your dataset (`demo.ipynb`)
+8. ✅ Automated tests (`tests/`) executable via `make test` or `pytest`
+9. ✅ Swagger API documentation (auto-generated by FastAPI)
+10. ✅ **Screenshots of merged Pull Requests** (from GitHub “Pulse” or “Contributors” section)
+
+### Live Demonstration:
+
+* ✅ Run `make help` to show all available commands
+* ✅ Run `make lint` with a score ≥ 9.5/10
+* ✅ Run `make test` with all tests passing
+* ✅ Run `make docker-run` to launch the project
+* ✅ Provide a link to your Docker images on the registry
+* ✅ **Demonstrate equal contribution** using GitHub Insights or `git shortlog -sn`
+* ✅ **Show merged PRs** in the GitHub history view
+
+---
+
+### Git Contribution Verification
+
+#### How to check commit distribution
+
+```bash
+# View the number of commits per author
+git shortlog -sn
+
+# View the commits of a specific member
+git log --author="member_name" --oneline | wc -l
+
+# View detailed contribution statistics
+git log --format='%aN' | sort | uniq -c | sort -rn
+
+# Check contributions on GitHub
+# Go to: Insights > Contributors
+```
+
+### Example of an acceptable distribution for a team of 4 people (100 total commits):
+
+✅ **GOOD**:
+
+* Alice: 30 commits (30%)
+* Bob: 27 commits (27%)
+* Charlie: 25 commits (25%)
+* Diana: 18 commits (18%)
+* Max difference: 30% - 18% = 12% ✅ < 30%
+
+❌ **BAD**:
+
+* Alice: 55 commits (55%)
+* Bob: 25 commits (25%)
+* Charlie: 15 commits (15%)
+* Diana: 5 commits (5%)
+* Max difference: 55% - 5% = 50% ❌ > 30%
+
+---
+
+## Pre-Submission Checklist
+
+Before submitting your project, make sure that:
+
+### Technical
+
+* [ ] `make lint` returns a score ≥ 9.5/10
+* [ ] `make test` runs all tests successfully
+* [ ] `make docker-run` launches the project without errors
+* [ ] `.pylintrc` file is present and properly configured
+* [ ] The `Makefile` contains at least the 10 required commands
+* [ ] `README.md` documents how to use the Makefile
+* [ ] No `.env` files or credentials are committed
+* [ ] Docker images are published on a public registry
+* [ ] The Neo4j graph schema is included
+* [ ] The demo notebook works correctly
+* [ ] Required screenshots are included in the README
+
+### Git Collaboration
+
+* [ ] Each member has **at least 15% of total commits**
+* [ ] Each member has created and merged **at least one Pull Request**
+* [ ] Commit messages are clear and descriptive
+* [ ] The `.gitignore` file is correctly configured
+* [ ] Screenshot of merged Pull Requests is included in the README
+* [ ] Contribution statistics are visible in GitHub Insights
+
+---
+
+## Important Notes
+
+⚠️ **Non-functional Makefile**: If any Makefile command doesn’t work, **−3 points**.
+
+⚠️ **Pylint not configured**: Missing `.pylintrc` or score < 9.5/10 = **−8 points**.
+
+⚠️ **Non-functional project**: If your project doesn’t start with `make docker-run` or endpoints fail to respond, **−25 points** automatically.
+
+⚠️ **Unequal contribution**:
+
+* If a member has **<10% of total commits**, **−5 points** automatically.
+* If a member has **no merged PR**, **−3 points per member**.
+* If a member only made “cosmetic” commits (typos, formatting), the project will be **individually re-evaluated**.
+
+⚠️ **Detected plagiarism**: Grade of **0/100** for the entire group + administrative report.
+
+⚠️ **Exposed credentials**: **−5 points** per committed `.env` file or secret.
+
+✨ **Teamwork**: The project lead will be evaluated on the quality of PR reviews, branch management, **and fairness of workload distribution**.
+
+---
+
+## Example of a README Section for Team Contributions
+
+Add this section to your `README.md`:
+
+```markdown
+## 👥 Team Contributions
+
+### Commit Statistics
+
+| Member  | Commits | Percentage | Pull Requests |
+|----------|----------|-------------|----------------|
+| Alice    | 32       | 28%         | 4 merged       |
+| Bob      | 30       | 26%         | 3 merged       |
+| Charlie  | 28       | 25%         | 3 merged       |
+| Diana    | 24       | 21%         | 2 merged       |
+
+**Total**: 114 commits
+
+### Role Distribution
+
+- **Alice**: Neo4j architecture, graph modeling, data ingestion scripts  
+- **Bob**: FastAPI backend, main endpoints, OpenAPI documentation  
+- **Charlie**: Pytest suite, Docker configuration, Makefile  
+- **Diana**: Frontend (optional), monitoring, deployment  
+
+### Major Pull Requests
+
+1. [#12 - Implement graph schema and constraints](link)  
+2. [#15 - Add FastAPI endpoints for recommendations](link)  
+3. [#18 - Setup pytest suite and Docker tests](link)  
+4. [#21 - Add monitoring dashboard](link)
+```
+
+
+--- 
+
+
+# Project Evaluation Checklist 
+
+| **Category**                         | **Criterion**                                                                                 | **Points** | ✅ Done | 💬 Notes |
+| ------------------------------------ | --------------------------------------------------------------------------------------------- | ---------: | :----: | ------------------- |
+| **Docker Infrastructure & Services** | Functional `docker-compose.yml` with ≥3 services (Neo4j, FastAPI, +1)                         |          2 |   [ ]  |                     |
+|                                      | Proper `Dockerfile` per service or official image                                             |          2 |   [ ]  |                     |
+|                                      | `.env.example` used (no secrets committed)                                                    |          2 |   [ ]  |                     |
+|                                      | ≥1 image pushed to public registry (link in README)                                           |          2 |   [ ]  |                     |
+|                                      | Starts cleanly with `docker-compose up`                                                       |          1 |   [ ]  |                     |
+| **Neo4j Graph Database**             | Graph schema (≥3 node labels, ≥3 relationship types, relevant properties)                     |          3 |   [ ]  |                     |
+|                                      | ≥2 constraints defined                                                                        |          2 |   [ ]  |                     |
+|                                      | Indexes for frequent queries                                                                  |          2 |   [ ]  |                     |
+|                                      | Data ingestion script with real dataset                                                       |          2 |   [ ]  |                     |
+|                                      | Dataset source documented & justified                                                         |          1 |   [ ]  |                     |
+| **FastAPI**                          | ≥4 endpoints covering use cases                                                               |          2 |   [ ]  |                     |
+|                                      | ≥3 endpoints use advanced Cypher                                                              |          2 |   [ ]  |                     |
+|                                      | Pydantic models for I/O validation                                                            |          2 |   [ ]  |                     |
+|                                      | Swagger/OpenAPI (`/docs`) works                                                               |          2 |   [ ]  |                     |
+|                                      | Proper error handling (codes/messages)                                                        |          1 |   [ ]  |                     |
+| **Schémas & Modélisation**           | Neo4j graph diagram (labels, relations, properties)                                           |          2 |   [ ]  |                     |
+|                                      | System architecture diagram (services, ports, data flow)                                      |          2 |   [ ]  |                     |
+|                                      | Written modeling justification                                                                |          1 |   [ ]  |                     |
+| **Documentation**                    | Complete `README.md` (desc, setup, examples, screenshots)                                     |          3 |   [ ]  |                     |
+|                                      | Demo notebook (`demo.ipynb`) with graph exploration                                           |          2 |   [ ]  |                     |
+| **Clean Code & Linting**             | `.pylintrc`, pylint ≥ 9.5/10, `make lint` works                                               |          2 |   [ ]  |                     |
+|                                      | PEP 8 + clean structure                                                                       |          1 |   [ ]  |                     |
+|                                      | Docstrings in all code files                                                                  |          1 |   [ ]  |                     |
+| **Advanced Cypher Queries**          | Pathfinding/GDS traversal in ≥2 endpoints                                                     |          5 |   [ ]  |                     |
+|                                      | Complex pattern matching (3+ levels, OPTIONAL MATCH, conditions)                              |          4 |   [ ]  |                     |
+|                                      | Analytical queries (`WITH`, `UNWIND`, stats)                                                  |          2 |   [ ]  |                     |
+| **Optimization & Performance**       | Optimized queries (`LIMIT`, subqueries, avoid Cartesian; params; cache awareness; benchmarks) |          6 |   [ ]  |                     |
+| **Graph Data Science**               | GDS: in-memory projection + ≥2 algorithms                                                     |          1 |   [ ]  |                     |
+|                                      | API integration of ML endpoint(s)                                                             |          3 |   [ ]  |                     |
+|                                      | ML workflow predicting links or classifying nodes (features, training, evaluation)            |          3 |   [ ]  |                     |
+|                                      | LLM-powered knowledge graph query system (prompting, response handling, evaluation)           |          3 |   [ ]  |                     |
+| **Makefile & Automation**            | Makefile with key commands present                                                            |          1 |   [ ]  |                     |
+|                                      | Commands work; `make help` is clear                                                           |          1 |   [ ]  |                     |
+|                                      | Makefile usage documented in README                                                           |          1 |   [ ]  |                     |
+| **Tests**                            | Pytest: unit, API integration, Neo4j connection                                               |          3 |   [ ]  |                     |
+|                                      | Container health checks (Neo4j bolt, FastAPI `/health`/`/docs`)                               |          2 |   [ ]  |                     |
+|                                      | Cypher query tests via `make test`/`pytest`                                                   |          2 |   [ ]  |                     |
+| **Coverage**                         | ≥60% with `pytest-cov`                                                                        |          2 |   [ ]  |                     |
+|                                      | All tests pass + coverage report                                                              |          1 |   [ ]  |                     |
+| **SE Best Practices**                | Lint workflow on push/PR                                                                      |          1 |   [ ]  |                     |
+|                                      | Test workflow with coverage                                                                   |          1 |   [ ]  |                     |
+|                                      | Badges in README (build, tests, coverage)                                                     |          1 |   [ ]  |                     |
+|                                      | Documented code reviews (≥2 comments/PR)                                                      |          1 |   [ ]  |                     |
+|                                      | Reverse proxy **or** authentication on a sensitive endpoint                                   |          1 |   [ ]  |                     |
+|                                      | **Strategic indexes demonstrated via `EXPLAIN`/`PROFILE` (screenshots/notebook)**             |          3 |   [ ]  |                     |
+| **Branches**                         | ≥2 active branches (`main`, `dev`/features) + one branch per team member                      |          2 |   [ ]  |                     |
+|                                      | Proper `.gitignore` excludes sensitive files                                                  |          1 |   [ ]  |                     |
+| **Team Contributions**               | Fair commit distribution (max gap 30%; −1 pt <15%)                                            |          3 |   [ ]  |                     |
+|                                      | Each member merged ≥1 substantial PR + screenshot                                             |          3 |   [ ]  |                     |
+|                                      | Clear commit messages (`feat:`, `fix:`, `docs:`)                                              |          1 |   [ ]  |                     |
