@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.database import get_neo4j_driver, close_neo4j_driver
-from app.routers import users, recommendations, paths, health
+from app.routers import users, recommendations, paths, health, llm
 
 load_dotenv()
 
@@ -67,6 +67,7 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(users.router, prefix="/api", tags=["Users"])
 app.include_router(recommendations.router, prefix="/api", tags=["Recommendations"])
 app.include_router(paths.router, prefix="/api", tags=["Paths"])
+app.include_router(llm.router, prefix="/api/llm", tags=["LLM-Powered Queries"])
 
 
 @app.get("/", tags=["Root"])
