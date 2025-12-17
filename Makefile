@@ -64,7 +64,7 @@ docker-push: docker-build
 
 docker-run:
 	@if [ ! -f .env ]; then echo "Error: .env not found. Run 'make init' first."; exit 1; fi
-	docker-compose up -d
+	docker compose up -d
 	@echo ""
 	@echo "Services started. Access points:"
 	@echo "  - Neo4j Browser: http://localhost:7474"
@@ -74,15 +74,15 @@ docker-run:
 	@echo "Run 'make logs' to view logs"
 
 docker-stop:
-	docker-compose down
+	docker compose down
 	@echo "All services stopped"
 
 docker-clean:
-	docker-compose down -v
+	docker compose down -v
 	@echo "All services stopped and volumes removed"
 
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 health:
 	@echo "Checking service health..."
