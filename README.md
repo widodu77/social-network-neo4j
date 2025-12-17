@@ -1,6 +1,13 @@
 # Social Network Recommendation System
 
-A LinkedIn-style professional network recommendation system built with Neo4j, FastAPI, and Docker. This project implements friend recommendations, job suggestions, and network path finding using graph database algorithms.
+[![Tests](https://github.com/widodu77/social-network-neo4j/workflows/Tests/badge.svg)](https://github.com/widodu77/social-network-neo4j/actions)
+[![Lint](https://github.com/widodu77/social-network-neo4j/workflows/Lint/badge.svg)](https://github.com/widodu77/social-network-neo4j/actions)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0-009688.svg)](https://fastapi.tiangolo.com)
+[![Neo4j](https://img.shields.io/badge/Neo4j-5.15.0-008CC1.svg)](https://neo4j.com)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+
+A LinkedIn-style professional network recommendation system built with Neo4j, FastAPI, and Docker. This project implements friend recommendations, job suggestions, network path finding, and LLM-powered graph queries using advanced graph database algorithms.
 
 ## 🔑 Quick Access Credentials
 
