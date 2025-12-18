@@ -2,16 +2,33 @@
 LLM-powered knowledge graph query endpoints.
 """
 
-from fastapi import APIRouter, HTTPException
+import os
+from fastapi import APIRouter, HTTPException, Depends
 from app.models.llm import LLMQueryRequest, LLMQueryResponse
 from app.services.llm_service import LLMQueryService
 
 router = APIRouter()
-llm_service = LLMQueryService()
+
+
+def get_llm_service() -> LLMQueryService:
+    """
+    Dependency to get LLM service instance.
+    Only initializes if OPENAI_API_KEY is set.
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM service unavailable: OPENAI_API_KEY not configured"
+        )
+    return LLMQueryService()
 
 
 @router.post("/query", response_model=LLMQueryResponse)
-async def query_with_natural_language(request: LLMQueryRequest):
+async def query_with_natural_language(
+    request: LLMQueryRequest,
+    llm_service: LLMQueryService = Depends(get_llm_service)
+):
     """
     Query the knowledge graph using natural language (LLM-powered).
 
@@ -43,7 +60,10 @@ async def query_with_natural_language(request: LLMQueryRequest):
 
 
 @router.get("/users/{user_id}/insights")
-async def get_user_network_insights(user_id: str):
+async def get_user_network_insights(
+    user_id: str,
+    llm_service: LLMQueryService = Depends(get_llm_service)
+):
     """
     Get AI-powered insights about a specific user's network.
 

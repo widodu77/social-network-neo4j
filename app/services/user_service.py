@@ -12,8 +12,13 @@ class UserService:
     """Service class for user-related operations."""
 
     def __init__(self, driver: Optional[Driver] = None):
-        """Initialize user service."""
-        self.driver = driver or get_neo4j_driver()
+        """
+        Initialize user service.
+
+        Args:
+            driver: Neo4j driver instance (optional, will create if not provided)
+        """
+        self._driver = driver or get_neo4j_driver()
 
     def create_user(self, user_data: UserCreate) -> User:
         """
@@ -39,7 +44,7 @@ class UserService:
                u.title AS title, u.location AS location, u.bio AS bio
         """
 
-        with self.driver.session() as session:
+        with self._driver.session() as session:
             result = session.run(
                 query,
                 name=user_data.name,
@@ -49,26 +54,12 @@ class UserService:
                 bio=user_data.bio,
             )
             record = result.single()
-
             user_id = record["user_id"]
 
-            # Add skills if provided
-            if user_data.skills:
-                for skill_name in user_data.skills:
-                    self._add_skill_to_user(user_id, skill_name)
+            # Add skills and company if provided
+            self._add_user_relationships(user_id, user_data.skills, user_data.company)
 
-            # Add company if provided
-            if user_data.company:
-                self._add_company_to_user(user_id, user_data.company)
-
-            return User(
-                user_id=user_id,
-                name=record["name"],
-                email=record["email"],
-                title=record["title"],
-                location=record["location"],
-                bio=record["bio"],
-            )
+            return self._record_to_user(record)
 
     def get_user(self, user_id: str) -> Optional[UserResponse]:
         """
@@ -92,24 +83,14 @@ class UserService:
                COLLECT(DISTINCT conn.user_id) AS connections
         """
 
-        with self.driver.session() as session:
+        with self._driver.session() as session:
             result = session.run(query, user_id=user_id)
             record = result.single()
 
             if not record:
                 return None
 
-            return UserResponse(
-                user_id=record["user_id"],
-                name=record["name"],
-                email=record["email"],
-                title=record["title"],
-                location=record["location"],
-                bio=record["bio"],
-                skills=[s for s in record["skills"] if s],
-                company=record["company"],
-                connections=[c for c in record["connections"] if c],
-            )
+            return self._record_to_user_response(record)
 
     def list_users(self, limit: int = 100, offset: int = 0) -> List[User]:
         """
@@ -135,38 +116,101 @@ class UserService:
         LIMIT $limit
         """
 
-        with self.driver.session() as session:
+        with self._driver.session() as session:
             result = session.run(query, limit=limit, offset=offset)
-            return [
-                User(
-                    user_id=record["user_id"],
-                    name=record["name"],
-                    email=record["email"],
-                    title=record["title"],
-                    location=record["location"],
-                    bio=record["bio"],
-                    connection_count=record["connection_count"],
-                    skill_count=record["skill_count"],
-                )
-                for record in result
-            ]
+            return [self._record_to_user(record) for record in result]
 
-    def _add_skill_to_user(self, user_id: str, skill_name: str):
-        """Add a skill to a user."""
+    def _add_user_relationships(
+        self, user_id: str, skills: Optional[List[str]], company: Optional[str]
+    ) -> None:
+        """
+        Add skills and company relationships to a user.
+
+        Args:
+            user_id: User ID
+            skills: List of skill names
+            company: Company name
+        """
+        if skills:
+            for skill_name in skills:
+                self._add_skill_to_user(user_id, skill_name)
+
+        if company:
+            self._add_company_to_user(user_id, company)
+
+    def _add_skill_to_user(self, user_id: str, skill_name: str) -> None:
+        """
+        Add a skill to a user.
+
+        Args:
+            user_id: User ID
+            skill_name: Skill name
+        """
         query = """
         MATCH (u:User {user_id: $user_id})
         MERGE (s:Skill {name: $skill_name})
         MERGE (u)-[:HAS_SKILL]->(s)
         """
-        with self.driver.session() as session:
+        with self._driver.session() as session:
             session.run(query, user_id=user_id, skill_name=skill_name)
 
-    def _add_company_to_user(self, user_id: str, company_name: str):
-        """Add a company relationship to a user."""
+    def _add_company_to_user(self, user_id: str, company_name: str) -> None:
+        """
+        Add a company relationship to a user.
+
+        Args:
+            user_id: User ID
+            company_name: Company name
+        """
         query = """
         MATCH (u:User {user_id: $user_id})
         MERGE (c:Company {name: $company_name})
         MERGE (u)-[:WORKS_AT]->(c)
         """
-        with self.driver.session() as session:
+        with self._driver.session() as session:
             session.run(query, user_id=user_id, company_name=company_name)
+
+    @staticmethod
+    def _record_to_user(record) -> User:
+        """
+        Convert a Neo4j record to a User model.
+
+        Args:
+            record: Neo4j record
+
+        Returns:
+            User instance
+        """
+        return User(
+            user_id=record["user_id"],
+            name=record["name"],
+            email=record["email"],
+            title=record["title"],
+            location=record["location"],
+            bio=record["bio"],
+            connection_count=record.get("connection_count", 0),
+            skill_count=record.get("skill_count", 0),
+        )
+
+    @staticmethod
+    def _record_to_user_response(record) -> UserResponse:
+        """
+        Convert a Neo4j record to a UserResponse model.
+
+        Args:
+            record: Neo4j record
+
+        Returns:
+            UserResponse instance
+        """
+        return UserResponse(
+            user_id=record["user_id"],
+            name=record["name"],
+            email=record["email"],
+            title=record["title"],
+            location=record["location"],
+            bio=record["bio"],
+            skills=[s for s in record["skills"] if s],
+            company=record["company"],
+            connections=[c for c in record["connections"] if c],
+        )
