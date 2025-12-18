@@ -1,6 +1,7 @@
 """
 Pydantic models for API request/response validation.
 """
+
 from app.models.user import User, UserCreate, UserResponse
 from app.models.skill import Skill, SkillCreate
 from app.models.company import Company, CompanyCreate

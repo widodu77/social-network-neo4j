@@ -1,6 +1,7 @@
 """
 Path model definitions for shortest path queries.
 """
+
 from typing import List, Optional
 from pydantic import BaseModel, Field
 

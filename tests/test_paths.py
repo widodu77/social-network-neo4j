@@ -1,6 +1,7 @@
 """
 Path finding endpoint tests.
 """
+
 import pytest
 
 

@@ -1,6 +1,7 @@
 """
 Path finding endpoints.
 """
+
 from fastapi import APIRouter, HTTPException, Query
 from app.models.path import ShortestPath
 from app.services.path_service import PathService
@@ -33,9 +34,7 @@ async def find_shortest_path(
         Shortest path information including all intermediate nodes
     """
     if from_user == to_user:
-        raise HTTPException(
-            status_code=400, detail="Source and target users must be different"
-        )
+        raise HTTPException(status_code=400, detail="Source and target users must be different")
 
     try:
         return path_service.find_shortest_path(from_user, to_user)

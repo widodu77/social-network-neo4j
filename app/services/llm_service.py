@@ -3,6 +3,7 @@ LLM-powered knowledge graph query service.
 This uses a simple template-based approach for demonstration.
 In production, you would integrate with OpenAI/Anthropic APIs.
 """
+
 from typing import Dict, Optional
 from neo4j import Driver
 from app.models.llm import LLMQueryResponse
@@ -27,7 +28,7 @@ class LLMQueryService:
                     ORDER BY connections DESC
                     LIMIT 10
                 """,
-                "explanation": "Finding users with the most connections in the network"
+                "explanation": "Finding users with the most connections in the network",
             },
             "popular skills": {
                 "cypher": """
@@ -37,7 +38,7 @@ class LLMQueryService:
                     ORDER BY user_count DESC
                     LIMIT 10
                 """,
-                "explanation": "Finding the most popular skills among users"
+                "explanation": "Finding the most popular skills among users",
             },
             "top companies": {
                 "cypher": """
@@ -47,7 +48,7 @@ class LLMQueryService:
                     ORDER BY employee_count DESC
                     LIMIT 10
                 """,
-                "explanation": "Finding companies with the most employees in the network"
+                "explanation": "Finding companies with the most employees in the network",
             },
             "ml developers": {
                 "cypher": """
@@ -60,7 +61,7 @@ class LLMQueryService:
                     ORDER BY connections DESC
                     LIMIT 10
                 """,
-                "explanation": "Finding ML/Data Science developers and their network size"
+                "explanation": "Finding ML/Data Science developers and their network size",
             },
             "web developers": {
                 "cypher": """
@@ -73,7 +74,7 @@ class LLMQueryService:
                     ORDER BY connections DESC
                     LIMIT 10
                 """,
-                "explanation": "Finding Web developers and their network size"
+                "explanation": "Finding Web developers and their network size",
             },
             "skill distribution": {
                 "cypher": """
@@ -83,7 +84,7 @@ class LLMQueryService:
                     RETURN category, skill_count, user_count
                     ORDER BY user_count DESC
                 """,
-                "explanation": "Analyzing skill distribution across categories"
+                "explanation": "Analyzing skill distribution across categories",
             },
             "network statistics": {
                 "cypher": """
@@ -97,8 +98,8 @@ class LLMQueryService:
                     WITH total_users, total_skills, total_companies, COUNT(DISTINCT r) AS total_connections
                     RETURN total_users, total_skills, total_companies, total_connections
                 """,
-                "explanation": "Getting overall network statistics"
-            }
+                "explanation": "Getting overall network statistics",
+            },
         }
 
     def process_natural_language_query(self, query: str, user_id: Optional[str] = None) -> LLMQueryResponse:
@@ -135,7 +136,7 @@ class LLMQueryService:
                     RETURN u.user_id AS user_id, u.name AS name, u.title AS title
                     LIMIT 10
                 """,
-                "explanation": "Showing sample users (query not recognized, showing default results)"
+                "explanation": "Showing sample users (query not recognized, showing default results)",
             }
             matched_key = "default"
 
@@ -149,7 +150,7 @@ class LLMQueryService:
             cypher_query=matched_template["cypher"].strip(),
             results=results,
             explanation=matched_template["explanation"],
-            query_type=matched_key
+            query_type=matched_key,
         )
 
     def get_user_insights(self, user_id: str) -> Dict:

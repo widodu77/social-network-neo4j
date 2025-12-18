@@ -1,15 +1,13 @@
 """
 Tests for LLM-powered query endpoints.
 """
+
 import pytest
 
 
 def test_llm_query_most_connected(client):
     """Test natural language query for most connected users."""
-    response = client.post(
-        "/api/llm/query",
-        json={"query": "Who are the most connected users?"}
-    )
+    response = client.post("/api/llm/query", json={"query": "Who are the most connected users?"})
 
     assert response.status_code in [200, 500, 503]
 
@@ -24,10 +22,7 @@ def test_llm_query_most_connected(client):
 
 def test_llm_query_popular_skills(client):
     """Test natural language query for popular skills."""
-    response = client.post(
-        "/api/llm/query",
-        json={"query": "What are the popular skills?"}
-    )
+    response = client.post("/api/llm/query", json={"query": "What are the popular skills?"})
 
     assert response.status_code in [200, 500, 503]
 
@@ -39,10 +34,7 @@ def test_llm_query_popular_skills(client):
 
 def test_llm_query_network_stats(client):
     """Test natural language query for network statistics."""
-    response = client.post(
-        "/api/llm/query",
-        json={"query": "What are the network statistics?"}
-    )
+    response = client.post("/api/llm/query", json={"query": "What are the network statistics?"})
 
     assert response.status_code in [200, 500, 503]
 
@@ -54,10 +46,7 @@ def test_llm_query_network_stats(client):
 
 def test_llm_query_unrecognized(client):
     """Test natural language query with unrecognized pattern."""
-    response = client.post(
-        "/api/llm/query",
-        json={"query": "Something completely random"}
-    )
+    response = client.post("/api/llm/query", json={"query": "Something completely random"})
 
     assert response.status_code in [200, 500, 503]
 

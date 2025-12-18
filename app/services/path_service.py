@@ -1,6 +1,7 @@
 """
 Path service for shortest path queries.
 """
+
 from typing import Optional
 from neo4j import Driver
 from app.models.path import ShortestPath, PathNode
@@ -56,9 +57,7 @@ class PathService:
         """
 
         with self.driver.session() as session:
-            result = session.run(
-                query, from_user_id=from_user_id, to_user_id=to_user_id
-            )
+            result = session.run(query, from_user_id=from_user_id, to_user_id=to_user_id)
             record = result.single()
 
             if not record:

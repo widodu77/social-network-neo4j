@@ -1,6 +1,7 @@
 """
 Neo4j database connection management.
 """
+
 import os
 from typing import Optional
 from neo4j import GraphDatabase, Driver

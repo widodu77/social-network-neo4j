@@ -1,6 +1,7 @@
 """
 User management endpoints.
 """
+
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
 from app.models.user import UserCreate, User, UserResponse

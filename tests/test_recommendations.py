@@ -1,6 +1,7 @@
 """
 Recommendation endpoint tests.
 """
+
 import pytest
 
 

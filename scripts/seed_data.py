@@ -2,6 +2,7 @@
 Data seeding script for the social network.
 Creates sample users, companies, skills, and relationships.
 """
+
 import os
 import sys
 import random
@@ -9,7 +10,7 @@ from faker import Faker
 from dotenv import load_dotenv
 
 # Add parent directory to path to import app modules
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.database.connection import Neo4jConnection
 
@@ -95,7 +96,6 @@ def create_constraints_and_indexes(conn: Neo4jConnection):
         "CREATE CONSTRAINT user_email_unique IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE",
         "CREATE CONSTRAINT skill_name_unique IF NOT EXISTS FOR (s:Skill) REQUIRE s.name IS UNIQUE",
         "CREATE CONSTRAINT company_name_unique IF NOT EXISTS FOR (c:Company) REQUIRE c.name IS UNIQUE",
-
         # Indexes
         "CREATE INDEX user_name_idx IF NOT EXISTS FOR (u:User) ON (u.name)",
         "CREATE INDEX user_location_idx IF NOT EXISTS FOR (u:User) ON (u.location)",
@@ -212,7 +212,8 @@ def create_user_companies(conn: Neo4jConnection):
     """
 
     # Run for each user
-    conn.execute_query("""
+    conn.execute_query(
+        """
         MATCH (u:User)
         WHERE NOT (u)-[:WORKS_AT]->()
         WITH u
@@ -221,7 +222,8 @@ def create_user_companies(conn: Neo4jConnection):
         ORDER BY rand()
         LIMIT 1
         MERGE (u)-[:WORKS_AT]->(c)
-    """)
+    """
+    )
 
     # Get count
     count_query = "MATCH ()-[r:WORKS_AT]->() RETURN COUNT(r) AS count"

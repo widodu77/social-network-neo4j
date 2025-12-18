@@ -1,6 +1,7 @@
 """
 Skill model definitions.
 """
+
 from pydantic import BaseModel, Field
 
 
@@ -8,9 +9,7 @@ class SkillBase(BaseModel):
     """Base skill model."""
 
     name: str = Field(..., min_length=1, max_length=50, description="Skill name")
-    category: str = Field(
-        ..., min_length=1, max_length=50, description="Skill category (e.g., Programming, Design)"
-    )
+    category: str = Field(..., min_length=1, max_length=50, description="Skill category (e.g., Programming, Design)")
 
 
 class SkillCreate(SkillBase):

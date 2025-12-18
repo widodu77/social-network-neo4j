@@ -1,6 +1,7 @@
 """
 Recommendation service for friend and job recommendations.
 """
+
 from typing import List, Optional
 from neo4j import Driver
 from app.models.recommendation import FriendRecommendation, JobRecommendation, PersonSuggestion

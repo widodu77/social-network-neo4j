@@ -1,6 +1,7 @@
 """
 Health check endpoints.
 """
+
 from fastapi import APIRouter, HTTPException
 from app.database import get_neo4j_driver
 
@@ -28,6 +29,4 @@ async def health_check():
             "health_check": health_status == 1,
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=503, detail=f"Service unavailable: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {str(e)}") from e

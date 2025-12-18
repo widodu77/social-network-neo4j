@@ -1,6 +1,7 @@
 """
 User service for business logic related to users.
 """
+
 from typing import List, Optional
 from neo4j import Driver
 from app.models.user import UserCreate, User, UserResponse

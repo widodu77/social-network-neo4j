@@ -1,6 +1,7 @@
 """
 User endpoint tests.
 """
+
 import pytest
 
 

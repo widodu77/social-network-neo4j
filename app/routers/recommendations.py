@@ -1,6 +1,7 @@
 """
 Recommendation endpoints.
 """
+
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
 from app.models.recommendation import FriendRecommendation, JobRecommendation, PersonSuggestion

@@ -1,6 +1,7 @@
 """
 LLM-powered knowledge graph query endpoints.
 """
+
 from fastapi import APIRouter, HTTPException
 from app.models.llm import LLMQueryRequest, LLMQueryResponse
 from app.services.llm_service import LLMQueryService
@@ -36,10 +37,7 @@ async def query_with_natural_language(request: LLMQueryRequest):
     In production, integrate with OpenAI/Anthropic APIs for dynamic query generation.
     """
     try:
-        return llm_service.process_natural_language_query(
-            query=request.query,
-            user_id=request.user_id
-        )
+        return llm_service.process_natural_language_query(query=request.query, user_id=request.user_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -89,32 +87,20 @@ async def get_example_queries():
         "examples": [
             {
                 "query": "Who are the most connected users?",
-                "description": "Find users with the most connections in the network"
+                "description": "Find users with the most connections in the network",
             },
-            {
-                "query": "What are the popular skills?",
-                "description": "Discover the most in-demand skills"
-            },
-            {
-                "query": "Show me ML developers",
-                "description": "Find machine learning and data science professionals"
-            },
-            {
-                "query": "Show me web developers",
-                "description": "Find web development professionals"
-            },
+            {"query": "What are the popular skills?", "description": "Discover the most in-demand skills"},
+            {"query": "Show me ML developers", "description": "Find machine learning and data science professionals"},
+            {"query": "Show me web developers", "description": "Find web development professionals"},
             {
                 "query": "What are the network statistics?",
-                "description": "Get overall statistics about the social network"
+                "description": "Get overall statistics about the social network",
             },
-            {
-                "query": "Show me top companies",
-                "description": "Find companies with the most employees in the network"
-            },
+            {"query": "Show me top companies", "description": "Find companies with the most employees in the network"},
             {
                 "query": "What is the skill distribution?",
-                "description": "Analyze how skills are distributed across categories"
-            }
+                "description": "Analyze how skills are distributed across categories",
+            },
         ],
-        "note": "Try these queries with the /api/llm/query endpoint"
+        "note": "Try these queries with the /api/llm/query endpoint",
     }

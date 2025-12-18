@@ -2,11 +2,12 @@
 Script to create Neo4j constraints and indexes.
 This ensures optimal query performance and data integrity.
 """
+
 import os
 import sys
 from dotenv import load_dotenv
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.database.connection import Neo4jConnection
 
@@ -28,9 +29,18 @@ def create_constraints_and_indexes():
     # Constraints (ensure uniqueness and data integrity)
     constraints = [
         ("user_id_unique", "CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.user_id IS UNIQUE"),
-        ("user_email_unique", "CREATE CONSTRAINT user_email_unique IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE"),
-        ("skill_name_unique", "CREATE CONSTRAINT skill_name_unique IF NOT EXISTS FOR (s:Skill) REQUIRE s.name IS UNIQUE"),
-        ("company_name_unique", "CREATE CONSTRAINT company_name_unique IF NOT EXISTS FOR (c:Company) REQUIRE c.name IS UNIQUE"),
+        (
+            "user_email_unique",
+            "CREATE CONSTRAINT user_email_unique IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE",
+        ),
+        (
+            "skill_name_unique",
+            "CREATE CONSTRAINT skill_name_unique IF NOT EXISTS FOR (s:Skill) REQUIRE s.name IS UNIQUE",
+        ),
+        (
+            "company_name_unique",
+            "CREATE CONSTRAINT company_name_unique IF NOT EXISTS FOR (c:Company) REQUIRE c.name IS UNIQUE",
+        ),
     ]
 
     print("Creating constraints...")
@@ -59,9 +69,9 @@ def create_constraints_and_indexes():
         except Exception as e:
             print(f"✗ {name}: {e}")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Verifying setup...")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     # Verify constraints
     constraints_query = "SHOW CONSTRAINTS"
