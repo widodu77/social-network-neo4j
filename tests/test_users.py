@@ -3,7 +3,6 @@ User endpoint tests.
 """
 
 
-
 def test_list_users(client):
     """
     Test listing users endpoint.

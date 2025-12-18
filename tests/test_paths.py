@@ -3,7 +3,6 @@ Path finding endpoint tests.
 """
 
 
-
 def test_shortest_path(client):
     """
     Test shortest path endpoint.

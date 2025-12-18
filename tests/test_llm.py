@@ -3,7 +3,6 @@ Tests for LLM-powered query endpoints.
 """
 
 
-
 def test_llm_query_most_connected(client):
     """Test natural language query for most connected users."""
     response = client.post("/api/llm/query", json={"query": "Who are the most connected users?"})

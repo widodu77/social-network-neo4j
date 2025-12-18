@@ -3,7 +3,6 @@ Recommendation endpoint tests.
 """
 
 
-
 def test_get_friend_recommendations(client):
     """
     Test friend recommendations endpoint.
