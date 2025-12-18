@@ -120,9 +120,7 @@ class UserService:
             result = session.run(query, limit=limit, offset=offset)
             return [self._record_to_user(record) for record in result]
 
-    def _add_user_relationships(
-        self, user_id: str, skills: Optional[List[str]], company: Optional[str]
-    ) -> None:
+    def _add_user_relationships(self, user_id: str, skills: Optional[List[str]], company: Optional[str]) -> None:
         """
         Add skills and company relationships to a user.
 
