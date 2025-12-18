@@ -16,7 +16,12 @@ load_dotenv()
 def create_constraints_and_indexes():
     """Create all required constraints and indexes."""
 
-    conn = Neo4jConnection()
+    # Get connection details from environment variables
+    uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    user = os.getenv("NEO4J_USER", "neo4j")
+    password = os.getenv("NEO4J_PASSWORD", "password123")
+
+    conn = Neo4jConnection(uri, user, password)
 
     print("Setting up Neo4j constraints and indexes...\n")
 
