@@ -9,18 +9,15 @@
 
 A LinkedIn-style professional network recommendation system built with Neo4j, FastAPI, and Docker. This project implements friend recommendations, job suggestions, network path finding, and LLM-powered graph queries using advanced graph database algorithms.
 
-## 🔑 Quick Access Credentials
+## 🚀 Quick Start
 
-**Neo4j Database:**
-- URL: http://localhost:7474
-- Username: `neo4j`
-- Password: `password123`
+Once the services are running (see [Getting Started](#getting-started)), you can access:
 
-**FastAPI:**
-- Swagger UI: http://localhost:8000/docs
-- API Base: http://localhost:8000
+- **Neo4j Browser**: [http://localhost:7474](http://localhost:7474)
+- **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **API Endpoint**: [http://localhost:8000](http://localhost:8000)
 
-**Note:** These credentials are for development/grading purposes only. In production, use secure passwords via environment variables.
+All credentials are configured via environment variables (see `.env.example`).
 
 ## 📋 Table of Contents
 
@@ -143,9 +140,7 @@ docker-compose ps
 All services should show "Up" status.
 
 #### 4. Access the Services
-- **Neo4j Browser**: http://localhost:7474
-  - Username: `neo4j`
-  - Password: `password123`
+- **Neo4j Browser**: http://localhost:7474 (credentials are in your `.env` file)
 - **FastAPI Docs**: http://localhost:8000/docs
 - **API via Nginx**: http://localhost/docs
 
@@ -494,17 +489,33 @@ make health         # Check service health
 
 ### Commit Statistics
 
-| Member  | Commits | Percentage | Pull Requests |
-|---------|---------|------------|---------------|
-| TBD     | TBD     | TBD        | TBD           |
+| Member             | Commits | Percentage | Pull Requests |
+|--------------------|---------|------------|---------------|
+| ajobi-uhc          | 20      | 34.5%      | 1 merged      |
+| widodu77           | 17      | 29.3%      | 1 merged      |
+| SauceXAlgerienne   | 12      | 20.7%      | 0 merged      |
+| alain-rostomyan    | 9       | 15.5%      | 0 merged      |
+
+**Total**: 58 commits
+
+**Project Statistics:**
+- Test Coverage: 66%
+- Pylint Score: 9.89/10
+- CI/CD: Automated testing and linting workflows
 
 ### Role Distribution
 
-- **Member 1**: Neo4j architecture, graph modeling, data ingestion scripts
-- **Member 2**: FastAPI backend, endpoints, OpenAPI documentation
-- **Member 3**: Docker setup, testing, CI/CD configuration
-- **Member 4**: Frontend integration (if applicable), monitoring
-- **Member 5**: Documentation, code review, deployment
+- **ajobi-uhc**: Neo4j architecture, graph schema design, constraints and indexes setup, LLM integration
+- **widodu77**: FastAPI backend development, API endpoints, Pydantic models, Docker configuration
+- **SauceXAlgerienne**: Pytest suite implementation, CI/CD workflows, code quality improvements
+- **alain-rostomyan**: Data ingestion scripts, recommendation algorithms, query optimization
+
+### Major Pull Requests
+
+1. [#1 - Add Docker registry link and improve code quality](https://github.com/widodu77/social-network-neo4j/pull/1)
+2. [#2 - Refactor services and fix test initialization](https://github.com/widodu77/social-network-neo4j/pull/2)
+3. [#3 - Add database constraints and indexes setup](https://github.com/widodu77/social-network-neo4j/pull/3)
+4. [#4 - Add comprehensive query optimization documentation](https://github.com/widodu77/social-network-neo4j/pull/4)
 
 ### Contribution Guidelines
 
@@ -575,6 +586,28 @@ To build and push your own image:
 make docker-build TAG=your-registry/social-network:latest
 make docker-push REGISTRY=your-registry/social-network
 ```
+
+## 📸 Screenshots & Documentation
+
+### Neo4j Graph Schema
+The complete graph schema diagram is available in `GRAPH_SCHEMA.md`, showing:
+- Node types (User, Skill, Company)
+- Relationship types (KNOWS, HAS_SKILL, WORKS_AT)
+- Properties and constraints
+
+### Query Performance
+Query optimization documentation and performance benchmarks are available in `QUERY_OPTIMIZATION.md` and `QUERY_PERFORMANCE.md`.
+
+### Demo Notebook
+The `demo_fixed.ipynb` notebook provides a comprehensive walkthrough of:
+- Database statistics and exploration
+- Friend recommendation queries
+- Job matching algorithms
+- Network path analysis
+- Graph analytics and visualizations
+
+### Pull Request History
+All merged pull requests are visible in the [GitHub repository](https://github.com/widodu77/social-network-neo4j/pulls?q=is%3Apr+is%3Amerged).
 
 ## 📝 License
 
