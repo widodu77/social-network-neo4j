@@ -1,10 +1,11 @@
 """
-LLM-powered knowledge graph query service.
-This uses a simple template-based approach for demonstration.
-In production, you would integrate with OpenAI/Anthropic APIs.
+LLM-powered knowledge graph query service using OpenAI.
+Converts natural language queries into Neo4j Cypher queries.
 """
 
+import os
 from typing import Dict, Optional
+from openai import OpenAI
 from neo4j import Driver
 from app.models.llm import LLMQueryResponse
 from app.database import get_neo4j_driver
@@ -16,98 +17,38 @@ class LLMQueryService:
     def __init__(self, driver: Optional[Driver] = None):
         """Initialize LLM query service."""
         self.driver = driver or get_neo4j_driver()
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-        # Template mappings for common queries
-        self.query_templates = {
-            "most connected": {
-                "cypher": """
-                    MATCH (u:User)-[r:KNOWS]-()
-                    WITH u, COUNT(r) AS connections
-                    RETURN u.user_id AS user_id, u.name AS name,
-                           u.title AS title, connections
-                    ORDER BY connections DESC
-                    LIMIT 10
-                """,
-                "explanation": "Finding users with the most connections in the network",
-            },
-            "popular skills": {
-                "cypher": """
-                    MATCH (u:User)-[:HAS_SKILL]->(s:Skill)
-                    WITH s, COUNT(u) AS user_count
-                    RETURN s.name AS skill, s.category AS category, user_count
-                    ORDER BY user_count DESC
-                    LIMIT 10
-                """,
-                "explanation": "Finding the most popular skills among users",
-            },
-            "top companies": {
-                "cypher": """
-                    MATCH (u:User)-[:WORKS_AT]->(c:Company)
-                    WITH c, COUNT(u) AS employee_count
-                    RETURN c.name AS company, c.industry AS industry, employee_count
-                    ORDER BY employee_count DESC
-                    LIMIT 10
-                """,
-                "explanation": "Finding companies with the most employees in the network",
-            },
-            "ml developers": {
-                "cypher": """
-                    MATCH (u:User)
-                    WHERE u.title CONTAINS 'Data' OR u.title CONTAINS 'ML'
-                    OPTIONAL MATCH (u)-[:KNOWS]-(friend)
-                    WITH u, COUNT(friend) AS connections
-                    RETURN u.user_id AS user_id, u.name AS name,
-                           u.title AS title, connections
-                    ORDER BY connections DESC
-                    LIMIT 10
-                """,
-                "explanation": "Finding ML/Data Science developers and their network size",
-            },
-            "web developers": {
-                "cypher": """
-                    MATCH (u:User)
-                    WHERE u.title CONTAINS 'Web'
-                    OPTIONAL MATCH (u)-[:KNOWS]-(friend)
-                    WITH u, COUNT(friend) AS connections
-                    RETURN u.user_id AS user_id, u.name AS name,
-                           u.title AS title, connections
-                    ORDER BY connections DESC
-                    LIMIT 10
-                """,
-                "explanation": "Finding Web developers and their network size",
-            },
-            "skill distribution": {
-                "cypher": """
-                    MATCH (s:Skill)<-[:HAS_SKILL]-(u:User)
-                    WITH s.category AS category, COUNT(DISTINCT s) AS skill_count,
-                         COUNT(u) AS user_count
-                    RETURN category, skill_count, user_count
-                    ORDER BY user_count DESC
-                """,
-                "explanation": "Analyzing skill distribution across categories",
-            },
-            "network statistics": {
-                "cypher": """
-                    MATCH (u:User)
-                    WITH COUNT(u) AS total_users
-                    MATCH (s:Skill)
-                    WITH total_users, COUNT(s) AS total_skills
-                    MATCH (c:Company)
-                    WITH total_users, total_skills, COUNT(c) AS total_companies
-                    MATCH ()-[r:KNOWS]-()
-                    WITH total_users, total_skills, total_companies, COUNT(DISTINCT r) AS total_connections
-                    RETURN total_users, total_skills, total_companies, total_connections
-                """,
-                "explanation": "Getting overall network statistics",
-            },
-        }
+        # Schema description for the LLM
+        self.schema_context = """
+        Neo4j Graph Schema:
+
+        Nodes:
+        - User (properties: user_id, name, email, title, location, bio)
+        - Skill (properties: name, category)
+        - Company (properties: name, industry, size, location)
+
+        Relationships:
+        - (User)-[:KNOWS]->(User) - friendship/connection
+        - (User)-[:HAS_SKILL]->(Skill) - user's skills
+        - (User)-[:WORKS_AT]->(Company) - employment
+
+        Constraints:
+        - User.user_id is UNIQUE
+        - User.email is UNIQUE
+        - Skill.name is UNIQUE
+        - Company.name is UNIQUE
+
+        Common Query Patterns:
+        - Find connected users: MATCH (u:User)-[:KNOWS]-(friend)
+        - Find users with skills: MATCH (u:User)-[:HAS_SKILL]->(s:Skill)
+        - Count connections: MATCH (u)-[:KNOWS]-() WITH u, COUNT(*) AS connections
+        - Find colleagues: MATCH (u1:User)-[:WORKS_AT]->(c)<-[:WORKS_AT]-(u2:User)
+        """
 
     def process_natural_language_query(self, query: str, user_id: Optional[str] = None) -> LLMQueryResponse:
         """
-        Process a natural language query and convert it to Cypher.
-
-        This is a simplified implementation using template matching.
-        In production, you would use LLM APIs (OpenAI, Anthropic) to generate Cypher.
+        Process a natural language query and convert it to Cypher using OpenAI.
 
         Args:
             query: Natural language query
@@ -116,41 +57,164 @@ class LLMQueryService:
         Returns:
             Query results with explanation
         """
-        query_lower = query.lower()
+        try:
+            # Generate Cypher query using OpenAI
+            cypher_query, explanation, query_type = self._generate_cypher_with_llm(query, user_id)
 
-        # Find matching template
-        matched_template = None
-        matched_key = None
+            # Execute the Cypher query
+            with self.driver.session() as session:
+                result = session.run(cypher_query)
+                results = [dict(record) for record in result]
 
-        for key, template in self.query_templates.items():
-            if key in query_lower:
-                matched_template = template
-                matched_key = key
-                break
+            return LLMQueryResponse(
+                natural_query=query,
+                cypher_query=cypher_query,
+                results=results,
+                explanation=explanation,
+                query_type=query_type,
+            )
 
-        # Default fallback query
-        if not matched_template:
-            matched_template = {
-                "cypher": """
-                    MATCH (u:User)
-                    RETURN u.user_id AS user_id, u.name AS name, u.title AS title
-                    LIMIT 10
-                """,
-                "explanation": "Showing sample users (query not recognized, showing default results)",
-            }
-            matched_key = "default"
+        except Exception as e:
+            # Fallback to simple query on error
+            return self._fallback_query(query, str(e))
 
-        # Execute the Cypher query
-        with self.driver.session() as session:
-            result = session.run(matched_template["cypher"])
-            results = [dict(record) for record in result]
+    def _generate_cypher_with_llm(self, query: str, user_id: Optional[str] = None) -> tuple[str, str, str]:
+        """
+        Use OpenAI to generate a Cypher query from natural language.
+
+        Args:
+            query: Natural language query
+            user_id: Optional user context
+
+        Returns:
+            Tuple of (cypher_query, explanation, query_type)
+        """
+        user_context = f"\nContext: Query is for user_id '{user_id}'" if user_id else ""
+
+        prompt = f"""You are a Neo4j Cypher query expert. Given a natural language query, generate a valid Cypher query.
+
+{self.schema_context}
+{user_context}
+
+User Query: {query}
+
+Generate a Cypher query that answers this question. Return your response in this EXACT format:
+
+CYPHER:
+[Your Cypher query here]
+
+EXPLANATION:
+[Brief explanation of what the query does]
+
+TYPE:
+[One-word category: connections/skills/companies/statistics/general]
+
+Important:
+- Return valid Cypher syntax only
+- Use LIMIT 10 by default unless user specifies otherwise
+- Use parameterized queries when possible
+- Order results meaningfully (DESC for counts, alphabetically for names)
+- Handle cases where data might not exist (use OPTIONAL MATCH when appropriate)
+"""
+
+        response = self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a Neo4j Cypher query generator."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.1,  # Low temperature for consistent, accurate queries
+            max_tokens=500,
+        )
+
+        # Parse the response
+        content = response.choices[0].message.content
+        cypher_query, explanation, query_type = self._parse_llm_response(content)
+
+        return cypher_query, explanation, query_type
+
+    def _parse_llm_response(self, content: str) -> tuple[str, str, str]:
+        """
+        Parse the LLM response to extract Cypher query, explanation, and type.
+
+        Args:
+            content: Raw LLM response
+
+        Returns:
+            Tuple of (cypher_query, explanation, query_type)
+        """
+        cypher_query = ""
+        explanation = ""
+        query_type = "general"
+
+        try:
+            # Split by sections
+            parts = content.split("CYPHER:")
+            if len(parts) > 1:
+                cypher_part = parts[1].split("EXPLANATION:")[0].strip()
+                cypher_query = cypher_part.strip()
+
+            parts = content.split("EXPLANATION:")
+            if len(parts) > 1:
+                explanation_part = parts[1].split("TYPE:")[0].strip()
+                explanation = explanation_part.strip()
+
+            parts = content.split("TYPE:")
+            if len(parts) > 1:
+                query_type = parts[1].strip().lower()
+
+        except Exception:
+            # If parsing fails, try to extract just the Cypher query
+            lines = content.split("\n")
+            cypher_lines = []
+            in_cypher = False
+
+            for line in lines:
+                if "MATCH" in line.upper() or "RETURN" in line.upper() or "WITH" in line.upper():
+                    in_cypher = True
+                if in_cypher:
+                    if "EXPLANATION" in line or "TYPE" in line:
+                        break
+                    cypher_lines.append(line)
+
+            cypher_query = "\n".join(cypher_lines).strip()
+            explanation = "Query generated from natural language"
+
+        # Clean up Cypher query (remove markdown code blocks if present)
+        cypher_query = cypher_query.replace("```cypher", "").replace("```", "").strip()
+
+        return cypher_query, explanation, query_type
+
+    def _fallback_query(self, query: str, error: str) -> LLMQueryResponse:
+        """
+        Fallback query when LLM generation fails.
+
+        Args:
+            query: Original natural language query
+            error: Error message
+
+        Returns:
+            LLMQueryResponse with default results
+        """
+        fallback_cypher = """
+            MATCH (u:User)
+            RETURN u.user_id AS user_id, u.name AS name, u.title AS title
+            LIMIT 10
+        """
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(fallback_cypher)
+                results = [dict(record) for record in result]
+        except Exception:
+            results = []
 
         return LLMQueryResponse(
             natural_query=query,
-            cypher_query=matched_template["cypher"].strip(),
+            cypher_query=fallback_cypher.strip(),
             results=results,
-            explanation=matched_template["explanation"],
-            query_type=matched_key,
+            explanation=f"Query generation failed: {error}. Showing sample users.",
+            query_type="fallback",
         )
 
     def get_user_insights(self, user_id: str) -> Dict:
