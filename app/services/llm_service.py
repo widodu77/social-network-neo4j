@@ -4,7 +4,7 @@ Converts natural language queries into Neo4j Cypher queries.
 """
 
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from openai import OpenAI
 from neo4j import Driver
 from app.models.llm import LLMQueryResponse
@@ -14,13 +14,8 @@ from app.database import get_neo4j_driver
 class LLMQueryService:
     """Service for LLM-powered natural language graph queries."""
 
-    def __init__(self, driver: Optional[Driver] = None):
-        """Initialize LLM query service."""
-        self.driver = driver or get_neo4j_driver()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        # Schema description for the LLM
-        self.schema_context = """
+    # Schema description for the LLM (class-level constant)
+    SCHEMA_CONTEXT = """
         Neo4j Graph Schema:
 
         Nodes:
@@ -46,6 +41,17 @@ class LLMQueryService:
         - Find colleagues: MATCH (u1:User)-[:WORKS_AT]->(c)<-[:WORKS_AT]-(u2:User)
         """
 
+    def __init__(self, driver: Optional[Driver] = None, client: Optional[OpenAI] = None):
+        """
+        Initialize LLM query service.
+
+        Args:
+            driver: Neo4j driver instance (optional, will create if not provided)
+            client: OpenAI client instance (optional, will create if not provided)
+        """
+        self._driver = driver or get_neo4j_driver()
+        self._client = client or OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
     def process_natural_language_query(self, query: str, user_id: Optional[str] = None) -> LLMQueryResponse:
         """
         Process a natural language query and convert it to Cypher using OpenAI.
@@ -62,7 +68,7 @@ class LLMQueryService:
             cypher_query, explanation, query_type = self._generate_cypher_with_llm(query, user_id)
 
             # Execute the Cypher query
-            with self.driver.session() as session:
+            with self._driver.session() as session:
                 result = session.run(cypher_query)
                 results = [dict(record) for record in result]
 
@@ -78,7 +84,7 @@ class LLMQueryService:
             # Fallback to simple query on error
             return self._fallback_query(query, str(e))
 
-    def _generate_cypher_with_llm(self, query: str, user_id: Optional[str] = None) -> tuple[str, str, str]:
+    def _generate_cypher_with_llm(self, query: str, user_id: Optional[str] = None) -> Tuple[str, str, str]:
         """
         Use OpenAI to generate a Cypher query from natural language.
 
@@ -93,7 +99,7 @@ class LLMQueryService:
 
         prompt = f"""You are a Neo4j Cypher query expert. Given a natural language query, generate a valid Cypher query.
 
-{self.schema_context}
+{self.SCHEMA_CONTEXT}
 {user_context}
 
 User Query: {query}
@@ -117,7 +123,7 @@ Important:
 - Handle cases where data might not exist (use OPTIONAL MATCH when appropriate)
 """
 
-        response = self.client.chat.completions.create(
+        response = self._client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a Neo4j Cypher query generator."},
@@ -133,7 +139,7 @@ Important:
 
         return cypher_query, explanation, query_type
 
-    def _parse_llm_response(self, content: str) -> tuple[str, str, str]:
+    def _parse_llm_response(self, content: str) -> Tuple[str, str, str]:
         """
         Parse the LLM response to extract Cypher query, explanation, and type.
 
@@ -203,7 +209,7 @@ Important:
         """
 
         try:
-            with self.driver.session() as session:
+            with self._driver.session() as session:
                 result = session.run(fallback_cypher)
                 results = [dict(record) for record in result]
         except Exception:
@@ -263,7 +269,7 @@ Important:
                END AS clustering_insight
         """
 
-        with self.driver.session() as session:
+        with self._driver.session() as session:
             result = session.run(query, userId=user_id)
             record = result.single()
 

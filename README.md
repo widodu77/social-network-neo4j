@@ -562,7 +562,15 @@ The project uses official images:
 - `python:3.11-slim`
 - `nginx:1.25-alpine`
 
-Custom FastAPI image can be pushed to a registry:
+**Published Custom Image:**
+- [`ajobi/social-network-api:latest`](https://hub.docker.com/r/ajobi/social-network-api) - FastAPI application image
+
+To use the published image:
+```bash
+docker pull ajobi/social-network-api:latest
+```
+
+To build and push your own image:
 ```bash
 make docker-build TAG=your-registry/social-network:latest
 make docker-push REGISTRY=your-registry/social-network

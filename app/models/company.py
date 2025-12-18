@@ -18,8 +18,6 @@ class CompanyBase(BaseModel):
 class CompanyCreate(CompanyBase):
     """Model for creating a new company."""
 
-    pass
-
 
 class Company(CompanyBase):
     """Complete company model."""
