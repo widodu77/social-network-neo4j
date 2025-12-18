@@ -15,8 +15,6 @@ class SkillBase(BaseModel):
 class SkillCreate(SkillBase):
     """Model for creating a new skill."""
 
-    pass
-
 
 class Skill(SkillBase):
     """Complete skill model."""
