@@ -2,7 +2,6 @@
 Tests for LLM-powered query endpoints.
 """
 
-import pytest
 
 
 def test_llm_query_most_connected(client):

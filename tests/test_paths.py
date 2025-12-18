@@ -2,7 +2,6 @@
 Path finding endpoint tests.
 """
 
-import pytest
 
 
 def test_shortest_path(client):

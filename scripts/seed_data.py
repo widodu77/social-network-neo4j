@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Add parent directory to path to import app modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.database.connection import Neo4jConnection
+from app.database.connection import Neo4jConnection  # noqa: E402
 
 load_dotenv()
 
@@ -200,17 +200,6 @@ def create_user_companies(conn: Neo4jConnection):
     """Create WORKS_AT relationships."""
     print("\nCreating user-company relationships...")
 
-    query = """
-    MATCH (u:User)
-    MATCH (c:Company)
-    WITH u, c
-    WHERE rand() < 0.4
-    WITH u, c
-    ORDER BY rand()
-    LIMIT 1
-    MERGE (u)-[:WORKS_AT]->(c)
-    """
-
     # Run for each user
     conn.execute_query(
         """
@@ -280,11 +269,11 @@ def print_statistics(conn: Neo4jConnection):
     result = conn.execute_query(stats_query)
     if result:
         stats = result[0]
-        print(f"\nNodes:")
+        print("\nNodes:")
         print(f"  Users:     {stats['users']}")
         print(f"  Skills:    {stats['skills']}")
         print(f"  Companies: {stats['companies']}")
-        print(f"\nRelationships:")
+        print("\nRelationships:")
         print(f"  KNOWS:     {stats['connections']}")
         print(f"  HAS_SKILL: {stats['user_skills']}")
         print(f"  WORKS_AT:  {stats['employments']}")

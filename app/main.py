@@ -2,7 +2,6 @@
 FastAPI main application entry point.
 """
 
-import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

@@ -2,7 +2,6 @@
 User endpoint tests.
 """
 
-import pytest
 
 
 def test_list_users(client):
